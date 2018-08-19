@@ -32,6 +32,9 @@ import com.qgstudio.qgglass.data.Result
 import android.os.Vibrator
 import java.lang.reflect.Array.getLength
 import android.content.res.AssetFileDescriptor
+import com.qgstudio.qgglass.Bee
+import com.qgstudio.qgglass.getLastLatLng
+import com.qgstudio.qgglass.saveLastLatlng
 import java.io.IOException
 
 
@@ -39,7 +42,9 @@ class MainActivity : PermissionCompatActivity() {
     private val map by lazy { mapView.map }
     private val locationClient by lazy { AMapLocationClient(applicationContext) }
     private var polyline: Polyline? = null
-    private val lList = mutableListOf<LatLng>()
+    companion object {
+        val lList = mutableListOf<LatLng>()
+    }
     private var marker: Marker? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,10 +72,11 @@ class MainActivity : PermissionCompatActivity() {
                 map.moveCamera(CameraUpdateFactory.zoomTo(16F))
             }
         }
-        doAfter(30000) {
-            EventBus.getDefault().post(ServerInfo(23.0382722958,113.3829282020, ""))
-            EventBus.getDefault().post(ServerInfo(23.0382722958,113.3829282020, "help"))
-        }
+        //测试代码
+//        doAfter(30000) {
+//            EventBus.getDefault().post(ServerInfo(23.0382722958,113.3829282020, ""))
+//            EventBus.getDefault().post(ServerInfo(23.0382722958,113.3829282020, "help"))
+//        }
     }
 
     @Subscribe
@@ -80,27 +86,18 @@ class MainActivity : PermissionCompatActivity() {
             addLatLngAndDraw(info.getLatLng())
         } else {
             //help指令时可能没有附带坐标信息，所以取原先列表中的最后一个点
-            toHelpDialog(lList[lList.lastIndex])
+            if (lList.isEmpty()) {
+                toHelpDialog(null)
+            } else {
+                toHelpDialog(lList[lList.lastIndex])
+            }
         }
     }
 
-    fun toHelpDialog(latLng: LatLng) {
+    fun toHelpDialog(latLng: LatLng?) {
         val dialog = HelpDialog.withLatlng(latLng)
         dialog.show(fragmentManager, "")
-        val vibrator = this.getSystemService(android.content.Context.VIBRATOR_SERVICE) as Vibrator
-        vibrator.vibrate(10000)
-        val mp = MediaPlayer()
-        val file = resources.openRawResourceFd(R.raw.abc)
-        try {
-            mp.setDataSource(file.fileDescriptor, file.startOffset,
-                    file.length)
-            mp.prepare()
-            file.close()
-        } catch (e: IOException) {
-            e.printStackTrace()
-        }
-        mp.isLooping = true
-        mp.start()
+        Bee.bee(this)
     }
 
     fun addLatLngAndDraw(latLng: LatLng) {
@@ -127,9 +124,8 @@ class MainActivity : PermissionCompatActivity() {
         super.onResume()
         mapView.onResume()
         //唤醒地图马上绘制最新的点，没有的话用new LatLng(39.906901,116.397972)替代
-        val latLng = LatLng(Preference.get("INFO", "Lat" to 39.906901) as Double, Preference.get("INFO", "Lng" to 116.397972) as Double)
-        markLastLatLng(latLng)
-        WebSocketManager.connect("ws://47.106.74.67:8888/ws?gid=${UUID.randomUUID()}")
+        markLastLatLng(getLastLatLng())
+        WebSocketManager.connect("ws://39.108.110.121:8888/ws?gid=${UUID.randomUUID()}")
     }
 
     override fun onSaveInstanceState(outState: Bundle?) {
@@ -137,12 +133,6 @@ class MainActivity : PermissionCompatActivity() {
         mapView.onSaveInstanceState(outState)
     }
 
-    private fun saveLastLatlng(latLng: LatLng) {
-        Preference.save("INFO") {
-            "Lat" - latLng.latitude
-            "Lng" - latLng.longitude
-        }
-    }
 
     private fun markLastLatLng(latLng: LatLng) {
         if (marker == null) {
@@ -150,5 +140,10 @@ class MainActivity : PermissionCompatActivity() {
         } else {
             marker!!.position = latLng
         }
+    }
+
+    override fun onBackPressed() {
+        super.onBackPressed()
+        Bee.stopBee()
     }
 }

@@ -10,6 +10,7 @@ import android.view.View
 import android.view.ViewGroup
 import com.amap.api.maps.model.LatLng
 import com.mobile.utils.showToast
+import com.qgstudio.qgglass.Bee
 import com.qgstudio.qgglass.R
 import kotlinx.android.synthetic.main.dialog_help.view.*
 
@@ -17,7 +18,7 @@ class HelpDialog : DialogFragment() {
     private var intent: Intent? = null
 
     companion object {
-        fun withLatlng(latLng: LatLng): HelpDialog {
+        fun withLatlng(latLng: LatLng?): HelpDialog {
             val helpDialog = HelpDialog()
             helpDialog.buildIntent(latLng)
             return helpDialog
@@ -28,8 +29,12 @@ class HelpDialog : DialogFragment() {
         val view = inflater.inflate(R.layout.dialog_help, container, false)
         view.btnToMapApp.setOnClickListener {
             try {
+                if (intent==null) {
+                    showToast("报警坐标为空")
+                }
                 intent?.let {
                     activity.startActivity(intent)
+                    Bee.stopBee()
                 }
             } catch (e: ActivityNotFoundException) {
                 showToast("使用此功能请安装高德地图")
@@ -37,15 +42,17 @@ class HelpDialog : DialogFragment() {
         }
         return view
     }
-
-    private fun buildIntent(latLng: LatLng) {
-        val dataBuilder = StringBuilder("amapuri://route/plan/?sid=BGVIS1")
-        dataBuilder.append("&sourceApplication=").append("QgGlass")
-                .append("&dlat=").append(latLng.latitude)
-                .append("&dlon=").append(latLng.longitude)
-                .append("&dev=").append(1)
-                .append("&t=").append(0)
-        this.intent = Intent("android.intent.action.VIEW", Uri.parse(dataBuilder.toString()))
+    //构建高德地图的导航intent
+    private fun buildIntent(latLng: LatLng?) {
+        latLng?.let {
+            val dataBuilder = StringBuilder("amapuri://route/plan/?sid=BGVIS1")
+            dataBuilder.append("&sourceApplication=").append("QgGlass")
+                    .append("&dlat=").append(latLng.latitude)
+                    .append("&dlon=").append(latLng.longitude)
+                    .append("&dev=").append(1)
+                    .append("&t=").append(0)
+            this.intent = Intent("android.intent.action.VIEW", Uri.parse(dataBuilder.toString()))
+        }
     }
 
     override fun onResume() {

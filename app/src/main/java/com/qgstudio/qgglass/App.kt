@@ -4,7 +4,9 @@ import android.app.Application
 import com.mobile.utils.Utils
 import com.qgstudio.qgglass.net.api.ContactApi
 import com.qgstudio.qgglass.net.api.UsrApi
+import okhttp3.Interceptor
 import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
@@ -18,7 +20,8 @@ class App : Application() {
     companion object {
         private val retrofit by lazy {
             Retrofit.Builder()
-                    .baseUrl("http://47.106.74.67:8888/")
+                    .client(OkHttpClient.Builder().addInterceptor(HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BODY }).build())
+                    .baseUrl("http://39.108.110.121:8888/")
                     .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                     .addConverterFactory(GsonConverterFactory.create())
                     .build()

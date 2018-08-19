@@ -11,4 +11,9 @@ interface UsrApi {
     @POST("login/check")
     fun login(@Body user: User): Observable<ResultV2<String>>
 
+    @POST("login/request")
+    fun getCode(@Body user: User): Observable<ResultV2<String>>
+
+    @GET("login/getwarning")
+    fun getWarning(): Observable<ResultV2<String>>
 }

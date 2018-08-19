@@ -34,7 +34,7 @@ object WebSocketManager : WebSocketListener() {
         Log.e("webSocket", "onFailure")
     }
 
-
+    //只接受坐标json，其他信息在转换json过程中丢失抛出异常
     override fun onMessage(webSocket: WebSocket?, text: String) {
         Log.e("webSocket", "onMessage:$text")
         try {
@@ -49,7 +49,7 @@ object WebSocketManager : WebSocketListener() {
         this.webSocket = null
         Log.e("webSocket", "onClosed")
     }
-
+    //向服务器发送信息
     fun send(any: Any) {
         webSocket?.let {
             val text = Gson().toJson(any)
